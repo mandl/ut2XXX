@@ -1,14 +1,14 @@
-#Simple DSO
+# Simple DSO
 
-This program is usefull with UNI-T digital storage oscilloscopes UT2XXX or UT3XXX.
+This program is useful with UNI-T digital storage oscilloscopes UT2XXX or UT3XXX.
 It's intended to be a replace for original software, which doesn't work under Linux.
 
-Requires pyQT4, QT 4, python 2.5, libusb and usb python module.
+Requires pyQT4, QT 4, python 2.7, libusb and usb python module.
 
 If your device is not found, you can add VID and PID to vid_pid.txt file and restart program. 
-VID and PID is in decimal NOT hexa !
+VID and PID is in decimal NOT hexadecimal !
 
-If you encounter some problems, look into HOWTO.txt file.
+
 
 
 # Install  Ubuntu 16
@@ -20,9 +20,12 @@ If you encounter some problems, look into HOWTO.txt file.
 # Install udev rules
 
     99-uni-t.rules
-    
+  
+# Run
 
-# Screenshot
+    ./simpleDSO.py
+    
+# Screenshots
 
 
 ![Screenshot](./screenshot/1.png)
