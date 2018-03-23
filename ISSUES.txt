@@ -1,0 +1,2 @@
+1/ if V/div for a chanel is setup as fine, SimpleDSO still shows  standard V/div ranges
+ 

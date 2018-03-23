@@ -1,0 +1,4 @@
+# format is VID,PID in decimal
+22102,2098
+22103,2002
+22102,2100

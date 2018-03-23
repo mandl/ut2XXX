@@ -1,0 +1,4 @@
+# Uni-T UTD2202 DSO  UT2062C DSO
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="5656", ATTRS{idProduct}=="0834", MODE="0666", GROUP="users"
+
+
