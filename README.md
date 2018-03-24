@@ -8,7 +8,7 @@ Requires pyQT4, QT 4, python 2.7, libusb and usb python module.
 If your device is not found, you can add VID and PID to vid_pid.txt file and restart program. 
 VID and PID is in decimal NOT hexadecimal !
 
-
+https://sourceforge.net/p/simpledso/wiki/Home/
 
 
 # Install  Ubuntu 16
