@@ -1,4 +1,4 @@
-#!/usr/bin//python
+#!/usr/bin//python3
 # -*- coding: utf-8 -*-
 
 #########################################################
@@ -16,9 +16,11 @@
 PID = [2098]
 VID = [22102] 
 
-from ut2XXX_definitions import *
+from ut2XXX.ut2XXX_definitions import *
+import logging
 
-import usb, time, StringIO, sys, os
+import usb, time, sys, os
+from io import StringIO,BytesIO
 
 # main class, encapsulates all USB communication
 class UNI_T_DSO:
@@ -86,26 +88,28 @@ class UNI_T_DSO:
 		self.interface_id = 0
 		self.config_id = 1
 		self.endpoints = []
-		# try to find device
+		# try to find devicecd
 		self.find_device()
 		# device not found
 		if not self.device:
-			print "Err: Error finding device. Exiting."
+			logging.error("Error finding device. Exiting.")
 			self.is_present = False
 		# Yes, weve got a DSO connected 
 		else:
-			print "Dbg: Device is presented"
+			logging.info ("Dbg: Device is presented")
 			self.is_present = True
 			self.handle = self.device.open()
-			print "Dbg: device opened"
+			logging.info ("Dbg: device opened")
+			
 			#self.product = self.handle.getString(self.device.iProduct, 50)
-			print "Dbg: getting product ID"
+			#print ("Dbg: getting product ID")
+			#usb.util.get_string(handle, dev.iManufacturer)
 			#self.manufacturer = self.handle.getString(self.device.iManufacturer, 50)
-			print "Dbg: getting manufacturer"
+			#print ("Dbg: getting manufacturer")
 			#self.handle.setConfiguration(self.config_id)
-			print "Dbg: device configured"
-			#self.handle.claimInterface(self.interface_id)
-			print "Dbg: interface claimed"
+			#print ("Dbg: device configured")
+			#self.handle.claimInterface(0)
+			#logging.info ("Dbg: interface claimed")
 			# init device
 			self.init_device()
 		
@@ -123,46 +127,43 @@ class UNI_T_DSO:
 					line = line.replace('\r','').replace('\n','')
 					VID.append(int(line.split('#')[0].split(',')[0]))
 					PID.append(int(line.split('#')[0].split(',')[1]))
-		except Exception, (s):
-			print "Wrn: Exception in reading VID/PID ->",s
+		except Exception as s:
+			logging.warn("Wrn: Exception in reading VID/PID -> %s",s)
 		# report
-		print "Inf: Loaded VID/PIDS are:"
-		print "Inf: VIDs -> ",VID
-		print "Inf: PIDs -> ",PID
-
+		logging.info ("Loaded VID/PIDS are:")
+		logging.info ("VIDs -> %s",VID)
+		logging.info ("PIDs -> %s",PID)
 
 	# try to find proper USB device and get config
 	def find_device(self):
-	
 		busses = usb.busses()
-		
 		for bus in busses:
 			devices = bus.devices
 			for dev in devices:
 				# is device in our PID and VID lists ?
 				if dev.idProduct in PID and dev.idVendor in VID:
-					print "Inf: Found UNI-T DSO on USB:"
+					logging.info ("Found UNI-T DSO on USB:")
 					#print "  iManuf. :",dev.iManufacturer
-					print "Inf:  idVendor:",dev.idVendor
-					print "Inf:  idProduct:",dev.idProduct
+					logging.info ("idVendor: %s",dev.idVendor)
+					logging.info ("idProduct: %s",dev.idProduct)
 					#return dev
 					self.device = dev
 					#print dev
 					for config in dev.configurations:
 						for intf in config.interfaces:
-							#print "    Interface:",intf[0].interfaceNumber
+							#print ("    Interface:",intf[0].interfaceNumber)
 							for alt in intf:
-								print "    Alternate Setting:",alt.alternateSetting
-								print "      Interface class:",alt.interfaceClass
-								print "      Interface sub class:",alt.interfaceSubClass
-								print "      Interface protocol:",alt.interfaceProtocol
+								logging.info ("    Alternate Setting: %s",alt.alternateSetting)
+								logging.info ("      Interface class: %s",alt.interfaceClass)
+								logging.info ("      Interface sub class: %s",alt.interfaceSubClass)
+								logging.info ("      Interface protocol: %s",alt.interfaceProtocol)
 								# find all endpoints
 								for ep in alt.endpoints:
 									self.endpoints.append(ep.address)
-									print "      Endpoint:",hex(ep.address)
-									print "        Type:",ep.type
-									print "        Max packet size:",ep.maxPacketSize
-									print "        Interval:",ep.interval
+									logging.info ("      Endpoint: %s",hex(ep.address))
+									logging.info ("        Type: %s",ep.type)
+									logging.info ("        Max packet size: %d",ep.maxPacketSize)
+									logging.info ("        Interval: %d",ep.interval)
 					
   	# enters far mode - it means all control on osciloscope is blocked
 	def enter_far_mode(self):
@@ -170,9 +171,9 @@ class UNI_T_DSO:
 		try:
 			self.handle.controlMsg(0x42,0xb1,None,value=0xf0)
 			ans = True
-		except Exception, (s):
+		except Exception as s:
 			self.error_message = s
-			print "Err: Error entering remote control mode."
+			logging.error ("Error entering remote control mode.")
 		else:
 			self.status["far_mode"] = True	
 		return ans
@@ -183,9 +184,9 @@ class UNI_T_DSO:
 		try:
 			self.handle.controlMsg(0x42,0xb1,None,value=0xf1)
 			ans = True
-		except Exception, (s):
+		except Exception as s:
 			self.error_message = s
-			print "Err: Error leaving remote control mode."
+			logging.error("Error leaving remote control mode.")
 		else:
 			self.status["far_mode"] = False			
 		return ans	
@@ -200,8 +201,8 @@ class UNI_T_DSO:
 			self.handle.controlMsg(0x00,0xb2,None)
 			self.status["info_data"] = self.handle.controlMsg(0xc2,0xb2, 8)
 			ans = True
-		except Exception, (s):
-			print "Err: Error in get_info_from_device:",s
+		except Exception as s:
+			logging.error("Error in get_info_from_device: %s",s)
 			self.error_message = s	
 		return ans	
 	
@@ -212,8 +213,8 @@ class UNI_T_DSO:
 			self.handle.controlMsg(0x42,0xb1,None,value=message)
 			time.sleep(0.05)
 			ans = True
-		except Exception, (s):
-			print "Err: Error in send_message:",s
+		except Exception as ex:
+			logging.error("Error in send_message: %s",ex)
 		return ans
 	
 	# receive data from DSO, returns 1024 byte of data, some description in doc directory
@@ -225,47 +226,31 @@ class UNI_T_DSO:
 			#time.sleep(0.02)	
 			try:
 				data = self.handle.bulkRead(130,1024,60)
-			except:
-				#print "Exception:",s
+			except Exception as ex:
+				logging.warning("Exception: %s",ex)
 				data = self.data
 			else:
 				break
 			#time.sleep(0.01)		
-			self.handle.controlMsg(0x42,0xb0,None,index=0, value=0xdc)	
-#		time.sleep(0.01)	
-#		self.handle.controlMsg(0x42,0xb1,None,index=0, value=0xcc)	
+			self.handle.controlMsg(0x42,0xb0,None,index=0, value=0xdc)		
 		return data
 		
 	def get_parameters(self):
-		
-		#self.handle.controlMsg(0x42,0xb0,None,index=0, value=0xdc)	
-		#time.sleep(0.02)	
-		#self.handle.controlMsg(0x42,0xb1,None,index=0, value=0xcc)	
-		#time.sleep(0.02)	
-		#self.handle.controlMsg(0x42,0xb1,None,index=0, value=0xcc)	
-		#time.sleep(0.02)	
-		#self.handle.controlMsg(0x42,0xb1,None,index=0, value=0xcc)	
-		#time.sleep(0.02)	
-		#self.handle.controlMsg(0x42,0xb1,None,index=0, value=0xcc)	
-		#time.sleep(0.02)	
-		#self.handle.controlMsg(0x42,0xb1,None,index=0, value=0xcc)	
-		#time.sleep(0.02)	
 		self.handle.controlMsg(0x42,0xb1,None,index=0, value=0xe3)	
 		time.sleep(0.05)	
 		self.handle.controlMsg(0x42,0xb0,None)	
 		try:
 			data = self.handle.bulkRead(0x82,512,500)
 		except:
-			print "Err: Exception, sending old data."
+			logging.error("Exception, sending old data.")
 			self.handle.controlMsg(0x42,0xb0,None,index=0, value=0xdc)
 			data = self.data		
 		
 		self.handle.controlMsg(0x42,0xb0,None,index=0, value=0xdc)
 		return data	
 
+	#ping DSO
 	def ping(self):
-		#self.handle.controlMsg(0x42,0xb1,None,index=0, value=0xcc)	
-		#time.sleep(0.01)	
 		self.handle.controlMsg(0x42,0xb0,None,index=0, value=0xdc)	
 		time.sleep(0.02)	
 		self.handle.controlMsg(0x42,0xb1,None,index=0, value=0xcc)	
@@ -273,7 +258,7 @@ class UNI_T_DSO:
 
 	
 	def close(self):
-		print "Inf: Closing, bye."
+		logging.info ("Closing, bye.")
 		self.leave_far_mode()
 		self.handle.releaseInterface()
 
@@ -296,30 +281,29 @@ class UNI_T_DSO:
 		
 	
 	def print_status(self):
-		print "Inf: Device:",self.product[0]
-		print "Inf: Manufacturer:", self.manufacturer
+		logging.info ("Device: %s",self.product[0])
+		logging.info ("Manufacturer: %s", self.manufacturer)
 		self.get_waveform()
-		print "Inf: ------------------------------"
+		logging.info ("------------------------------")
 		if self.ch1_data["active"]:
-			print "Inf: Chanel 1: ON"
+			logging.info ("Inf: Chanel 1: ON")
 		else:
-			print "Inf: Chanel 1: OFF" 
-		print "Inf: X range: ", self.ch1_data["V_div"],"V/div"
-		print "Inf: Coupling:", self.ch1_data["couple"]
-		print "Inf: Y range: ", self.ch1_data["s_div"], "s/div"
+			logging.info ("Inf: Chanel 1: OFF") 
+		logging.info ("X range: %d V/div", self.ch1_data["V_div"])
+		logging.info ("Coupling:%d ", self.ch1_data["couple"])
+		logging.info ("Y range: %d s/div", self.ch1_data["s_div"])
 		
 		if self.ch2_data["active"]:
-			print "Inf: Chanel 2: ON"
+			logging.info ("Chanel 2: ON")
 		else:
-			print "Inf: Chanel 2: OFF" 
-		print "Inf: X range: ", self.ch2_data["V_div"],"V/div"
-		print "Inf: Coupling:", self.ch2_data["couple"]
-		print "Inf: Y range: ", self.ch2_data["s_div"], "s/div"
+			logging.info ("Chanel 2: OFF") 
+		logging.info ("X range: %d V/dic", self.ch2_data["V_div"])
+		logging.info ("Coupling:%d", self.ch2_data["couple"])
+		logging.info ("Y range: %d s/div", self.ch2_data["s_div"])
 		
 
 	def parse_waveform(self, filename):
 		self.get_waveform(open(filename).readlines())
-
 
 	# get samples from DSO
 	def get_waveform(self, extern_data = None):
@@ -339,10 +323,11 @@ class UNI_T_DSO:
 			if not self.ch1_data["header"] == data[0:32]:
 				self.ch1_data["changed"] = True
 				
-#				if len(self.ch1_data["header"]) == 32:
-#					for i in range(0,32):
-#						if not self.ch1_data["header"][i] == data[i]:
-#							print "Change:",i,"value prev./now",self.ch1_data["header"][i],data[i]
+				# just for quick debug
+				#if len(self.ch1_data["header"]) == 32:
+				#	for i in range(0,32):
+				#		if not self.ch1_data["header"][i] == data[i]:
+				#			print ("Change:",i,"value prev./now",self.ch1_data["header"][i],data[i])
 			else:
 				self.ch1_data["changed"] = False
 				
@@ -359,16 +344,19 @@ class UNI_T_DSO:
 			self.ch1_data["V_div_index"] = data[Y_SENSE_CH1]
 			self.ch2_data["V_div"] = Y_RANGE[data[Y_SENSE_CH2]]*(10**(data[Y_PROBE_CH2]))
 			self.ch2_data["V_div_index"] = data[Y_SENSE_CH2]
+			
 			# probe
 			self.ch1_data["probe"] = 10**(data[Y_PROBE_CH1])
 			self.ch1_data["probe_index"] = data[Y_PROBE_CH1]
 			self.ch2_data["probe"] = 10**(data[Y_PROBE_CH2])
 			self.ch2_data["probe_index"] = data[Y_PROBE_CH2]
+			
 			# check for coupling
 			self.ch1_data["couple"] = COUPLING[data[COUPLING_CH1]]
 			self.ch2_data["couple"] = COUPLING[data[COUPLING_CH2]]
 			self.ch1_data["couple_index"] = data[COUPLING_CH1]
 			self.ch2_data["couple_index"] = data[COUPLING_CH2]
+			
 			# save samples data to buffers
 			if len(data) == 1024:
 				self.ch1_data["samples"] = data[516:766]
@@ -379,19 +367,20 @@ class UNI_T_DSO:
 				self.ch2_data["samples"] = data[1520:2270]
 			
 			else:
-				print "Err: Unexcepted length of data sample, no data decoded then."
+				logging.error("Unexcepted length of data sample, no data decoded then.")
 				
-			# compute s/div
+			# compute t/div
 			self.ch1_data["s_div"] = X_RANGE[data[X_SCALE_CH1]]
 			self.ch1_data["s_div_index"] = data[X_SCALE_CH1]
 			self.ch2_data["s_div"] = X_RANGE[data[X_SCALE_CH2]]
 			self.ch2_data["s_div_index"] = data[X_SCALE_CH2]
+			
 			# check status of channels
 			self.ch1_data["active"] = bool(data[CHANNEL_STATE] & 0x01)
 			self.ch2_data["active"] = bool(data[CHANNEL_STATE] & 0x02)
+			
 			# x offset
 			self.ch1_data["y_offset"] = 0x7e - data[Y_POS_CH1]
-			#print self.ch1_x_offset
 			self.ch2_data["y_offset"] = 0x7e - data[Y_POS_CH2]
 			
 			self.ch1_data["Bw_limit"] = bool(data[BW_LIMIT_CH1])
@@ -403,63 +392,62 @@ class UNI_T_DSO:
 			self.ch1_data["x_offset"] = data[X_CURSOR_CH1]
 			self.ch2_data["x_offset"] = data[X_CURSOR_CH2]
 			
-			self.ch1_data["x_poz"] = (data[8] << 8) + data[7]
-			self.ch2_data["x_poz"] = (data[40] << 8) + data[39]
-			
+			self.ch1_data["x_poz"] = (data[X_POS_MSB_CH1] << 8) + data[X_POS_LSB_CH1]
+			self.ch2_data["x_poz"] = (data[X_POS_MSB_CH2] << 8) + data[X_POS_LSB_CH2]
+		
 		else:
-			print "Wrn:",time.time(),"Data buffer error:",len(data)
+			if data == None:
+				count = 0
+			else:
+				count = len(data)
+			logging.warning("%s Data buffer error: %d",time.time(), count)
 		
 	def test_screenshot(self):
 		self.get_screenshot()
 		for i in range(0,len(self.data)):
 			try:
 				if self.data_old[i] != self.data[i]:
-					print "Inf: Changed to", i 
+					logging.info("Changed to %d", i) 
 			except:
 				pass
 		self.data_old = self.data
 		
 	def get_screenshot(self, filename=""):
 		self.data = ()
-		#self.handle.controlMsg(0x42,0xb1,None,index=0, value=0xcc)	
-		#time.sleep(0.02)	
-		#self.handle.controlMsg(0x42,0xb1,None,index=0, value=0xcc)	
-		#time.sleep(0.02)
 		ts = time.time()
 		self.handle.controlMsg(0x42,0xb1,None,index=0, value=0xe2)	
 		time.sleep(0.05)	
 		self.handle.controlMsg(0x42,0xb0,None,index=2, value=0x26)	
 		#time.sleep(0.01)
 		self.pixmap_data = self.handle.bulkRead(130,38912,1000)
-		print "Inf: Processing time:",time.time() - ts
-		print "Inf: Loaded:",len(self.pixmap_data),"bytes"
+		logging.info ("Processing time: %s",time.time() - ts)
+		logging.info ("Loaded:%d bytes",len(self.pixmap_data))
 		
 		pixel_data = []
 		
 		if len(self.pixmap_data) == 38912:
 			pixel_data = self.write_pixmap(filename)
 		else:
-			print "Inf: Too few data for screenshot."
+			logging.info("Too few data for screenshot.")
 		return pixel_data
 		
 	# write binary ppm bitmap created from screenshot data from DSO
 	def write_pixmap(self, filename=""):
 		
 		# fake file
-		bitmap_data = StringIO.StringIO()
+		bitmap_data = BytesIO()
 		
 		# size of bitmap
 		width=320; height=240
-		ftype='P6' #use 'P3' for ascii, 'P6' for binary
+		#use 'P3' for ascii, 'P6' for binary
 		try:
 			if filename == "":
 				ppmfile=open('testimage.ppm','wb')
 			else:
 				ppmfile=open(filename,'wb')
-					
-			bitmap_data.write("%s\n" % (ftype)) 
-			bitmap_data.write("%d %d\n" % (width, height)) 
-			bitmap_data.write("255\n")
+			
+			header = ("P6\n {} {}\n {}\n").format(width ,height,255)	
+			bitmap_data.write(header.encode('utf-8')) 
 			
 			# working with 2 bytes in one time
 			for index in range(0,len(self.pixmap_data),2):
@@ -471,26 +459,19 @@ class UNI_T_DSO:
 				
 				color = self.pixmap_data[index+1]
 				color2 = ((color) & 0x0F)
-				color1 = ((color) & 0xF0) / 16
+				color1 = ((color) & 0xF0) >> 4
 				
 				color = self.pixmap_data[index]
 				color4 = ((color) & 0x0F)
-				color3 = ((color) & 0xF0) / 16
+				color3 = ((color) & 0xF0) >> 4
 				
-				#ppmfile.write("%c%c%c" % self.convert_to_color(color1))
-				bitmap_data.write("%c%c%c" % self.convert_to_color(color1))
-				
-				#ppmfile.write("%c%c%c" % self.convert_to_color(color2))
-				bitmap_data.write("%c%c%c" % self.convert_to_color(color2))
-				
-				#ppmfile.write("%c%c%c" % self.convert_to_color(color3))
-				bitmap_data.write("%c%c%c" % self.convert_to_color(color3))
-				
-				#ppmfile.write("%c%c%c" % self.convert_to_color(color4))
-				bitmap_data.write("%c%c%c" % self.convert_to_color(color4))
+				bitmap_data.write(self.convert_to_color(color1))
+				bitmap_data.write(self.convert_to_color(color2))
+				bitmap_data.write(self.convert_to_color(color3))
+				bitmap_data.write(self.convert_to_color(color4))
 		
-		except Exception, (s):
-			print "Inf: Exception in write_pixmap:",filename," -> ",s
+		except Exception as ex:
+			logging.info("Exception in write_pixmap: %s -Y %s",filename,ex)
 		
 		finally:
 			s = bitmap_data.getvalue()
@@ -504,46 +485,49 @@ class UNI_T_DSO:
 		
 		# black
 		if  color == 0x00:
-			return (0,0,0)
+			return (b'\x00\x00\x00')
 		# dark grey
 		elif color == 0x01:
-			return (0,0,64)
+			return (b'\x00\x00\x40')
+		# dark blue
+		elif color == 0x03:
+			return (b'\x05\x04\xaa')
 		# lighter blue
 		elif color == 0x05:
-			return (0,0,192)
+			return (b'\x00\x00\xC0')
 		# red
 		elif color == 0x06:
-			return (0,224,0)
+			return (b'\x00\xF4\x00')
 		#
 		elif color == 0x07:
-			return (128,32,0)
+			return (b'\x80\x20\x00')
 		# grid color - cyan
 		elif color == 0x08:
-			return (0,125,125)
+			return (b'\x00\x7D\x7D')
 		# dark red
 		elif color == 0x09:
-			return (128,32,0)
+			return (b'\x80\x20\x00')
 		
 		elif color == 0x0A:
-			return (125,125,125)
+			return (b'\x7D\x7D\x7d')
 		# darker blue
 		elif color == 0x0b:
-			return (0,0,128)
+			return (b'\x00\x00\x80')
 		# cyan
 		elif color == 0x0C:
-			return (0,192,192)
+			return (b'\x00\xC0\xC0')
 		# yellow
 		elif color == 0x0D:
-			return (255,255,0)
+			return (b'\xFF\xFF\x00')
 		# red
 		elif color == 0x0E:
-			return (224,32,0)
+			return (b'\xE0\x20\x00')
 		# white
 		elif color == 0x0F:
-			return (255,255,255)
+			return (b'\xFF\xFF\xFF')
 		else:
-			print "Inf: Unsuported color:", color
-			return (255,255,255)	
+			logging.info ("Inf: Unsuported color: %d", color)
+			return (b'\xFF\xFF\xFF')	
 
 	# test changes in data from DSO
 	def test_parameters(self):
@@ -552,7 +536,7 @@ class UNI_T_DSO:
 			self.data = data
 		for i in range(0,150):
 			if not self.data[i] == data[i]:
-				print "Inf: Change at",i,"value prev./now",self.data[i],"/",data[i]
+				logging.info("Change at %d value prev./now %d / %d",i,self.data[i],data[i])
 				
 		self.data = data
 
@@ -571,4 +555,4 @@ if __name__ == '__main__':
 		
 		dso.close()
 	else:
-		print "Err: Device was not recognized or found."
+		logging.error("Device was not recognized or found.")

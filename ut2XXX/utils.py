@@ -1,4 +1,4 @@
-#!/usr/bin//python
+#!/usr/bin//python3
 # -*- coding: utf-8 -*-
 
 ############################################################################
@@ -29,22 +29,22 @@ def float2engstr(float_num):
 		return (str(0))
 	
 	if  abs_num >= 1E-9 and abs_num < 1E-6:
-		return str(float_num*1E9)+"n"
+		return ("{:.3f}n").format(float_num*1E9)
 	
 	if  abs_num >= 1E-6 and abs_num < 1E-3:
-		return (str(float_num*1E6)+"u")
+		return ("{:.3f}u").format(float_num*1E6)
 	
 	if  abs_num >= 1E-3 and abs_num < 1:
-		return (str(float_num*1000)+"m")
+		return ("{:.3f}m").format(float_num*1000)
 	
 	if  abs_num >= 1 and abs_num < 1000:
-		return (str(float_num))
+		return ("{:.3f}").format(float_num)
 	
 	if abs_num >= 1000 and abs_num < 900E3:
-		return (str(float_num/1000)+"k")
+		return ("{:.3f}k").format(float_num/1000)
 	
 	if abs_num >= 900E3 and abs_num < 900E6:
-		return (str(float_num/1E6)+"M")
+		return ("{:.3f}M").format(float_num/1E6)
 	
 	
 

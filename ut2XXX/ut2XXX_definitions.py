@@ -87,42 +87,69 @@ DATA_CH1 = 0xf9
 DATA_CH2 = 0xfa
 GET_WAVE = 0x06
 
-# ranges
-# X axis range in V/div
+
+# Y axis range in V/div
 Y_RANGE = [2E-3, 5E-3, 10E-3, 20E-3, 50E-3, 100E-3, 200E-3, 500E-3, 1, 2, 5]
 
-X_RANGE = [0, 25E-10, 5E-9, 10E-9, 20E-9, 50E-9, 100E-9, 200E-9, 500E-9, 1E-6, 2E-6, 5E-6, 10E-6, 20E-6, 50E-6, 100E-6, 200E-6, 500E-6,
-	1E-3, 2E-3, 5E-3, 10E-3, 20E-3, 50E-3, 100E-3, 200E-3, 500E-3, 1, 2, 5, 10, 20, 50]
+# x axis range in s/div
+X_RANGE = [0, 20E-10, 5E-9, 10E-9, 20E-9, 50E-9, 100E-9, 200E-9, 500E-9, 1E-6, 2E-6, 5E-6, \
+           10E-6, 20E-6, 50E-6, 100E-6, 200E-6, 500E-6,
+	       1E-3, 2E-3, 5E-3, 10E-3, 20E-3, 50E-3, 100E-3, 200E-3, 500E-3, 1, 2, 5, 10, 20, 50]
 	
+# channel coupling 
 COUPLING = ["DC","AC","GND"]
+
+ # offset between channel data 1 and 2
+CH_OFFSET    = 32
 	
 # indexes of data sections
+#  0 – CH1            active
+#  1 – CH2            active
+#  2 – CH2 and CH1    active
 CHANNEL_STATE = 2
 
-CH_OFFSET    = 32
+# some data ???
+#   2 - math active
+CHANNEL_INFO_INDEX = 4
 
+# y sense index V/div
 Y_SENSE_CH1  = 5
 Y_SENSE_CH2  = Y_SENSE_CH1 + CH_OFFSET	
 
+# y position wave
 Y_POS_CH1    = 6
 Y_POS_CH2    = Y_POS_CH1 + CH_OFFSET
 
-Y_PROBE_CH1  = 19
-Y_PROBE_CH2  = Y_PROBE_CH1 + CH_OFFSET
+# x position wave
+X_POS_LSB_CH1 = 7
+X_POS_MSB_CH1 = 8
+X_POS_LSB_CH2 = 7 + CH_OFFSET
+X_POS_MSB_CH2 = 8 + CH_OFFSET
 
-COUPLING_CH1 = 12
-COUPLING_CH2 = COUPLING_CH1 + CH_OFFSET
-
-X_SCALE_CH1 = 10
-X_SCALE_CH2 = 10 + CH_OFFSET
-
-
-X_CURSOR_CH1 = 11
-X_CURSOR_CH2 = 11 + CH_OFFSET
-
-BW_LIMIT_CH1= 15
-BW_LIMIT_CH2= 15 + CH_OFFSET
-
+# channel inverted
 INVERTED_CH1= 9
 INVERTED_CH2= 9 + CH_OFFSET
 
+# x scale index s/div
+X_SCALE_CH1 = 10
+X_SCALE_CH2 = 10 + CH_OFFSET
+
+# X curser position
+X_CURSOR_CH1 = 11
+X_CURSOR_CH2 = 11 + CH_OFFSET
+
+# channel coupling index
+COUPLING_CH1 = 12
+COUPLING_CH2 = COUPLING_CH1 + CH_OFFSET
+
+# Bandwide limit active
+BW_LIMIT_CH1= 15
+BW_LIMIT_CH2= 15 + CH_OFFSET
+
+# Probe x1 x10 x100 x1000
+Y_PROBE_CH1  = 19
+Y_PROBE_CH2  = Y_PROBE_CH1 + CH_OFFSET
+
+# Index 20 ?
+
+# Index 21 ?
